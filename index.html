@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Contest Judging Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        button { touch-action: manipulation; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-800 pb-12">
+
+    <div class="max-w-md mx-auto px-4 pt-6">
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Contest Judging Panel</h1>
+            <p class="text-sm text-slate-500 mt-1">Scores sync directly to Master Spreadsheet</p>
+        </header>
+
+        <!-- Main Form -->
+        <form id="scoringForm" class="space-y-5 bg-white p-5 rounded-2xl shadow-xs border border-slate-100">
+            
+            <!-- Metadata Row -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Judge Initial/Name</label>
+                    <input type="text" id="judgeName" required 
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-blue-500 focus:bg-white transition-colors" 
+                        placeholder="e.g. Judge A">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Entry ID / #</label>
+                    <input type="number" id="entryId" inputmode="numeric" pattern="[0-9]*" required 
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-blue-500 focus:bg-white transition-colors" 
+                        placeholder="000">
+                </div>
+            </div>
+
+            <hr class="border-slate-100 my-2">
+
+            <!-- Scoring Criteria Blocks -->
+            <!-- 1. Build Quality -->
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-semibold text-slate-700">Build Quality</span>
+                    <span id="val-bq" class="text-xl font-bold text-blue-600 bg-blue-50 px-3 py-0.5 rounded-full">5</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button type="button" onclick="adjustScore('bq', -1)" class="flex-1 bg-white border border-slate-200 text-slate-600 text-2xl font-bold py-3 rounded-xl active:bg-slate-100 shadow-xs">-</button>
+                    <button type="button" onclick="adjustScore('bq', 1)" class="flex-1 bg-white border border-slate-200 text-slate-600 text-2xl font-bold py-3 rounded-xl active:bg-slate-100 shadow-xs">+</button>
+                </div>
+            </div>
+
+            <!-- 2. Painting & Detailing -->
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-semibold text-slate-700">Painting / Detailing</span>
+                    <span id="val-pd" class="text-xl font-bold text-blue-600 bg-blue-50 px-3 py-0.5 rounded-full">5</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button type="button" onclick="adjustScore('pd', -1)" class="flex-1 bg-white border border-slate-200 text-slate-600 text-2xl font-bold py-3 rounded-xl active:bg-slate-100 shadow-xs">-</button>
+                    <button type="button" onclick="adjustScore('pd', 1)" class="flex-1 bg-white border border-slate-200 text-slate-600 text-2xl font-bold py-3 rounded-xl active:bg-slate-100 shadow-xs">+</button>
+                </div>
+            </div>
+
+            <!-- 3. Concept & Creativity -->
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-semibold text-slate-700">Concept / Creativity</span>
+                    <span id="val-cc" class="text-xl font-bold text-blue-600 bg-blue-50 px-3 py-0.5 rounded-full">5</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button type="button" onclick="adjustScore('cc', -1)" class="flex-1 bg-white border border-slate-200 text-slate-600 text-2xl font-bold py-3 rounded-xl active:bg-slate-100 shadow-xs">-</button>
+                    <button type="button" onclick="adjustScore('cc', 1)" class="flex-1 bg-white border border-slate-200 text-slate-600 text-2xl font-bold py-3 rounded-xl active:bg-slate-100 shadow-xs">+</button>
+                </div>
+            </div>
+
+            <!-- Live Dashboard Summary Display -->
+            <div class="bg-slate-900 text-white rounded-xl p-4 flex justify-around text-center shadow-sm">
+                <div>
+                    <span class="block text-xs text-slate-400 font-medium uppercase tracking-wider">Total</span>
+                    <span id="live-total" class="text-2xl font-bold tracking-tight">15<span class="text-xs text-slate-500 font-normal">/30</span></span>
+                </div>
+                <div class="w-px bg-slate-800 self-stretch"></div>
+                <div>
+                    <span class="block text-xs text-slate-400 font-medium uppercase tracking-wider">Avg Rating</span>
+                    <span id="live-avg" class="text-2xl font-bold tracking-tight text-emerald-400">5.0</span>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold py-4 rounded-xl shadow-md transition-all active:scale-[0.99] cursor-pointer flex justify-center items-center">
+                Submit Entry Score
+            </button>
+        </form>
+
+        <!-- Dynamic Success/Error Feedback Banner -->
+        <div id="statusBanner" class="hidden mt-4 p-4 rounded-xl text-center font-medium animate-fade-in text-sm"></div>
+    </div>
+
+    <script>
+        // Replace this string with your newly deployed Google Apps script webapp URL token:
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqeKsFcT5eF9HibGveXyd8ToTpIo58qrtzvc489xXtlr8rY8nQr2eZ-X2j0HmzyOgPRg/exec';
+
+        const scores = { bq: 5, pd: 5, cc: 5 };
+
+        function adjustScore(criteria, amount) {
+            const current = scores[criteria];
+            const next = current + amount;
+            if (next >= 1 && next <= 10) {
+                scores[criteria] = next;
+                document.getElementById(`val-${criteria}`).innerText = next;
+                calculateTotals();
+            }
+        }
+
+        function calculateTotals() {
+            const total = scores.bq + scores.pd + scores.cc;
+            const avg = (total / 3).toFixed(1);
+            document.getElementById('live-total').innerHTML = `${total}<span class="text-xs text-slate-500 font-normal">/30</span>`;
+            document.getElementById('live-avg').innerText = avg;
+        }
+
+        document.getElementById('scoringForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const statusBanner = document.getElementById('statusBanner');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Syncing with Sheet...";
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            const payload = {
+                judgeName: document.getElementById('judgeName').value,
+                entryId: document.getElementById('entryId').value,
+                buildQuality: scores.bq,
+                paintingDetailing: scores.pd,
+                conceptCreativity: scores.cc
+            };
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                statusBanner.className = "mt-4 p-4 rounded-xl text-center font-medium bg-emerald-50 text-emerald-800 border border-emerald-100";
+                statusBanner.innerText = `✅ Success! Scores for Entry #${payload.entryId} saved.`;
+                statusBanner.classList.remove('hidden');
+
+                // Partial reset: Keep judge active name context, wipe entries for next build loop iteration
+                document.getElementById('entryId').value = '';
+                scores.bq = 5; scores.pd = 5; scores.cc = 5;
+                document.getElementById('val-bq').innerText = 5;
+                document.getElementById('val-pd').innerText = 5;
+                document.getElementById('val-cc').innerText = 5;
+                calculateTotals();
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(err => {
+                statusBanner.className = "mt-4 p-4 rounded-xl text-center font-medium bg-rose-50 text-rose-800 border border-rose-100";
+                statusBanner.innerText = "❌ Network error. Check connection or Apps Script setups.";
+                statusBanner.classList.remove('hidden');
+                console.error(err);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Entry Score";
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                
+                setTimeout(() => { statusBanner.classList.add('hidden'); }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>
